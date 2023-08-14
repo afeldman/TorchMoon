@@ -1,5 +1,4 @@
-import gc
-from typing import Any, List
+from typing import Any
 
 from torch.nn import (Conv2d, Sequential, Dropout2d, Upsample)
 from torch.nn.init import xavier_uniform
@@ -8,8 +7,7 @@ from torch.nn import BCEWithLogitsLoss
 from torch.nn.modules.pooling import MaxPool2d
 from torch.optim import Adam
 
-import torch
-import gc
+from torch import Tensor
 
 import pytorch_lightning as pl
 
@@ -33,7 +31,7 @@ class DeepMoon(pl.LightningModule):
 
         # this line allows to access init params with 'self.hparams' attribute
         # it also ensures init params will be stored in ckpt
-        self.save_hyperparameters(logger=False)
+        self.save_hyperparameters(logger=True)
 
         self.criterion = BCEWithLogitsLoss()
 
@@ -184,120 +182,110 @@ class DeepMoon(pl.LightningModule):
 
         return u
 
-    def dropout_reg(self, u):
+    def dropout_reg(self, tensor: Tensor) -> Tensor:
         if self.hparams.dropout is not None and self.hparams.dropout > 0:
-            return Dropout2d(p=self.hparams.dropout, inplace=True)(u)
-        return u
+            return Dropout2d(p=self.hparams.dropout, inplace=True)(tensor)
+        return tensor
 
-    def init_weights(self, m):
-        if isinstance(m, Conv2d):
-            xavier_uniform(m.weight)
+    def init_weights(self, tensor:Tensor) -> None:
+        if isinstance(tensor, Conv2d):
+            xavier_uniform(tensor.weight)
 
-    def configure_optimizers(self):
-        optimizer = Adam(self.parameters(),
+    def configure_optimizers(self) -> Adam:
+        return Adam(self.parameters(),
                          lr=self.hparams.lr,
                          weight_decay=self.hparams.lmbda)
-        return optimizer
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        x, _, _ = batch
+        y_hat = self(x)
+        return y_hat
 
     def step(self, batch: Any):
         x, y, _ = batch
-
-        y_hat = self.forward(x)
-
+        y_hat = self(x)
         loss = self.criterion(y_hat, y)
-
-        del batch
-        gc.collect()
-        torch.cuda.empty_cache()
-
         return loss, y_hat, y
 
     def training_step(self, train_batch: Any, batch_idx: int) -> dict:
         # data to device
         loss, preds, targets = self.step(train_batch)
-        del train_batch
-        gc.collect()
-        torch.cuda.empty_cache()
 
         acc = self.train_acc(preds, targets)
 
         self.log("train/loss",
-                 loss,
-                 on_step=False,
+                 loss.item(),
+                 on_step=True,
                  on_epoch=True,
-                 prog_bar=False)
+                 prog_bar=True,
+                 logger=True)
 
         self.log("train/acc", 
-                  acc, 
-                  on_step=False, 
+                  acc.item(), 
+                  on_step=True, 
                   on_epoch=True, 
-                  prog_bar=True)
+                  prog_bar=True,
+                  logger=True)
 
-        return {"loss": loss, "preds": preds, "targets": targets}
+        return loss
 
     def validation_step(self, val_batch: Any, batch_idx: int) -> dict:
         loss, preds, targets = self.step(val_batch)
-        del val_batch
-        gc.collect()
-        torch.cuda.empty_cache()
 
         # log val metrics
         acc = self.val_acc(preds, targets)
         self.log("val/loss",
-                 loss,
-                 on_step=False,
+                 loss.item(),
+                 on_step=True,
                  on_epoch=True,
-                 prog_bar=False)
-        self.log("val/acc", 
-                  acc, 
-                  on_step=False, 
-                  on_epoch=True, 
-                  prog_bar=True)
-    
-        return {"loss": loss, "preds": preds, "targets": targets}
-
-    def validation_epoch_end(self, outputs: List[Any]):
-        acc = self.val_acc.compute()  # get val accuracy from current epoch
-
-        gc.collect()
-        torch.cuda.empty_cache()
+                 prog_bar=True,
+                 logger=True)
         
+        self.log("val/acc", 
+                  acc.item(), 
+                  on_step=True, 
+                  on_epoch=True, 
+                  prog_bar=True,
+                 logger=True)
+    
+        return loss
+
+    def on_validation_epoch_end(self):
+        acc = self.val_acc.compute() 
+
         self.val_acc_best.update(acc)
 
         self.log("val/acc_best",
-                 self.val_acc_best.compute(),
+                 self.val_acc_best.compute().item(),
                  on_epoch=True,
-                 prog_bar=True)
+                 prog_bar=True,
+                 logger=True)
 
     def test_step(self, batch: Any, batch_idx: int):
         loss, preds, targets = self.step(batch)
-        del batch
-        gc.collect()
-        torch.cuda.empty_cache()
 
         # log test metrics
         acc = self.test_acc(preds, targets)
 
         self.log("test/loss", 
-                 loss, 
-                 on_step=False, 
-                 on_epoch=True)
+                 loss.item(), 
+                 on_step=True, 
+                 on_epoch=True,
+                 logger=True)
 
         self.log("test/acc", 
-                 acc, 
-                 on_step=False, 
-                 on_epoch=True)
+                 acc.item(), 
+                 on_step=True, 
+                 on_epoch=True,
+                 logger=True)
 
-        return {"loss": loss, "preds": preds, "targets": targets}
+        return loss
 
     def on_epoch_end(self):
         # reset metrics at the end of every epoch
         self.train_acc.reset()
         self.test_acc.reset()
         self.val_acc.reset()
-
-        torch.cuda.empty_cache()
-
 
     def on_train_start(self):
         # reset metrics at the end of every epoch

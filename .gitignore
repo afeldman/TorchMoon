@@ -3,6 +3,9 @@
 [Bb]uild
 *.json
 
+data/*
+logs/*
+
 .vscode*
 
 # ipynb stuff
