@@ -196,12 +196,14 @@ class DeepMoon(pl.LightningModule):
                          lr=self.hparams.lr,
                          weight_decay=self.hparams.lmbda)
 
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        x, _, _ = batch
-        y_hat = self(x)
-        return y_hat
-
     def step(self, batch: Any):
+        '''
+            make a prediction step.
+
+            1. get the input data x
+            2. get the output data y
+            3. make the loss calculation
+        '''
         x, y, _ = batch
         y_hat = self(x)
         loss = self.criterion(y_hat, y)
@@ -211,21 +213,8 @@ class DeepMoon(pl.LightningModule):
         # data to device
         loss, preds, targets = self.step(train_batch)
 
+        # train accuracy
         acc = self.train_acc(preds, targets)
-
-        self.log("train/loss",
-                 loss.item(),
-                 on_step=True,
-                 on_epoch=True,
-                 prog_bar=True,
-                 logger=True)
-
-        self.log("train/acc", 
-                  acc.item(), 
-                  on_step=True, 
-                  on_epoch=True, 
-                  prog_bar=True,
-                  logger=True)
 
         return loss
 
@@ -234,19 +223,6 @@ class DeepMoon(pl.LightningModule):
 
         # log val metrics
         acc = self.val_acc(preds, targets)
-        self.log("val/loss",
-                 loss.item(),
-                 on_step=True,
-                 on_epoch=True,
-                 prog_bar=True,
-                 logger=True)
-        
-        self.log("val/acc", 
-                  acc.item(), 
-                  on_step=True, 
-                  on_epoch=True, 
-                  prog_bar=True,
-                 logger=True)
     
         return loss
 
@@ -268,13 +244,13 @@ class DeepMoon(pl.LightningModule):
         acc = self.test_acc(preds, targets)
 
         self.log("test/loss", 
-                 loss.item(), 
+                 loss.detach().item(), 
                  on_step=True, 
                  on_epoch=True,
                  logger=True)
 
         self.log("test/acc", 
-                 acc.item(), 
+                 acc.detach().item(), 
                  on_step=True, 
                  on_epoch=True,
                  logger=True)
