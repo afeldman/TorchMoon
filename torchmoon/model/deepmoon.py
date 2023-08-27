@@ -216,6 +216,20 @@ class DeepMoon(pl.LightningModule):
         # train accuracy
         acc = self.train_acc(preds, targets)
 
+        self.log("train/loss",
+                 loss.detach().item(),
+                 on_step=True,
+                 on_epoch=True,
+                 prog_bar=True,
+                 logger=True)
+
+        self.log("train/acc", 
+                  acc.detach().item(), 
+                  on_step=True, 
+                  on_epoch=True, 
+                  prog_bar=True,
+                  logger=True)
+
         return loss
 
     def validation_step(self, val_batch: Any, batch_idx: int) -> dict:
@@ -223,6 +237,20 @@ class DeepMoon(pl.LightningModule):
 
         # log val metrics
         acc = self.val_acc(preds, targets)
+    
+        self.log("val/loss",
+                 loss.detach().item(),
+                 on_step=True,
+                 on_epoch=True,
+                 prog_bar=True,
+                 logger=True)
+        
+        self.log("val/acc", 
+                  acc.detach().item(), 
+                  on_step=True, 
+                  on_epoch=True, 
+                  prog_bar=True,
+                 logger=True)
     
         return loss
 
@@ -232,7 +260,7 @@ class DeepMoon(pl.LightningModule):
         self.val_acc_best.update(acc)
 
         self.log("val/acc_best",
-                 self.val_acc_best.compute().item(),
+                 self.val_acc_best.compute().detach().item(),
                  on_epoch=True,
                  prog_bar=True,
                  logger=True)
