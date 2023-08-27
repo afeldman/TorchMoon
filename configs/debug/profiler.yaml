@@ -3,7 +3,7 @@ defaults:
   - default.yaml
 
 trainer:
-  max_epochs: 1
-  profiler: "simple"
-  # profiler: "advanced"
+  max_epochs: 5
+  #profiler: "simple"
+  profiler: "advanced"
   # profiler: "pytorch"

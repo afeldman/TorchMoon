@@ -19,7 +19,7 @@ class CraterDataModule(LightningDataModule):
                  num_workers: int = 8,
                  image_size: int = 256,
                  training_test_eval_split: Tuple[float, float,
-                                                 float] = (0.25, 0.25, 0.75),
+                                                 float] = (0.25, 0.25, 0.50),
                  download: bool = False,
                  pin_memory: bool = False) -> None:
 
