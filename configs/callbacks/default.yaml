@@ -1,14 +1,14 @@
 ---
 model_checkpoint:
   _target_: pytorch_lightning.callbacks.ModelCheckpoint
-  monitor: "val/acc"
+  monitor: "val/acc_best"
   mode: "max"
   save_top_k: 3
   save_last: True
-  verbose: False
+  verbose: True
   dirpath: "checkpoints/"
   filename: "DeepMoon-epoch_{epoch:03d}"
-  auto_insert_metric_name: False
+  auto_insert_metric_name: True
 
 early_stopping:
   _target_: pytorch_lightning.callbacks.EarlyStopping

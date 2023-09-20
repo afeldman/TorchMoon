@@ -1,6 +1,8 @@
 from typing import List
 from omegaconf import DictConfig
 
+import wandb
+
 from pytorch_lightning import (LightningModule, LightningDataModule, Trainer,
                                Callback)
 try:
@@ -8,8 +10,6 @@ try:
 except ImportError:
     from pytorch_lightning.loggers import (LightningLoggerBase, wandb)
     Logger = LightningLoggerBase
-
-
 
 def log_hyperparameters(
     config: DictConfig,
@@ -63,6 +63,4 @@ def finish(
     # without this sweeps with wandb logger might crash!
     for lg in logger:
         if isinstance(lg, wandb.WandbLogger):
-            import wandb
-
             wandb.finish()

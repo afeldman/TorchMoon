@@ -6,6 +6,8 @@ hydra_core
 craterdata
 python-dotenv
 rich
+apu
 wandb
 hydra_colorlog
 hydra-optuna-sweeper 
+tensorboard
