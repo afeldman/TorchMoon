@@ -1,14 +1,11 @@
-from typing import (Tuple, Optional)
-
 from math import floor
+from typing import Optional, Tuple
 
+from craterdata.mooncraterdataset import MoonCraterDataset
+from pytorch_lightning import LightningDataModule
 from torch import Generator
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision import transforms
-
-from pytorch_lightning import LightningDataModule
-
-from craterdata.mooncraterdataset import MoonCraterDataset
 
 
 class CraterDataModule(LightningDataModule):

@@ -1,16 +1,13 @@
-from typing import (Any, List)
+from typing import Any, List
 
-from torch.nn import (Module, Conv2d, Dropout2d, ConvTranspose2d)
-from torch import (cat, add)
-from torch.nn import BCEWithLogitsLoss
-from torch.optim import Adam
 import pytorch_lightning as pl
-
-from torchmetrics import (MaxMetric, StructuralSimilarityIndexMeasure)
-
 from apu.ml.torch.activations import Activation
-from apu.ml.torch.util import (passthrough, ContBatchNorm2d)
 from apu.ml.torch.conv import make_Conv
+from apu.ml.torch.util import ContBatchNorm2d, passthrough
+from torch import add, cat
+from torch.nn import BCEWithLogitsLoss, Conv2d, ConvTranspose2d, Dropout2d, Module
+from torch.optim import Adam
+from torchmetrics import MaxMetric, StructuralSimilarityIndexMeasure
 
 
 class InputTransition(Module):
@@ -189,7 +186,7 @@ class Crater_VNet(pl.LightningModule):
 
         return {"loss": loss, "preds": preds, "targets": targets}
 
-    def validation_epoch_end(self, outputs: List[Any]):
+    def on_validation_epoch_end(self, outputs: List[Any]):
         acc = self.val_acc.compute()  # get val accuracy from current epoch
         self.val_acc_best.update(acc)
         self.log("val/acc_best",

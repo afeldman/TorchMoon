@@ -1,6 +1,7 @@
 _target_: pytorch_lightning.Trainer
 
-gpus: 1
+accelerator: 'auto'
+devices: 1
 
 min_epochs: 1
 max_epochs: 30
@@ -9,4 +10,4 @@ max_epochs: 30
 # num_sanity_val_steps: 0
 
 # ckpt path
-resume_from_checkpoint: null
+#resume_from_checkpoint: null

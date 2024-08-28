@@ -1,22 +1,16 @@
 import gc
-from typing import Any, List
-
-from torch.nn import (Conv2d, Sequential, Dropout2d, Upsample)
-from torch.nn.init import xavier_uniform
-from torch.nn.modules.activation import Sigmoid
-from torch.nn import BCEWithLogitsLoss
-from torch.nn.modules.pooling import MaxPool2d
-from torch.optim import Adam
-
-import torch
-import gc
+from typing import Any
 
 import pytorch_lightning as pl
-
-from torchmetrics import (MaxMetric, StructuralSimilarityIndexMeasure)
-
+import torch
 from apu.ml.torch.activations import Activation
 from apu.ml.torch.util import merge
+from torch.nn import BCEWithLogitsLoss, Conv2d, Dropout2d, Sequential, Upsample
+from torch.nn.init import xavier_uniform
+from torch.nn.modules.activation import Sigmoid
+from torch.nn.modules.pooling import MaxPool2d
+from torch.optim import Adam
+from torchmetrics import MaxMetric, StructuralSimilarityIndexMeasure
 
 
 class DeepMoon(pl.LightningModule):
@@ -42,7 +36,7 @@ class DeepMoon(pl.LightningModule):
         self.train_acc = StructuralSimilarityIndexMeasure()
         self.val_acc = StructuralSimilarityIndexMeasure()
         self.test_acc = StructuralSimilarityIndexMeasure()
-        
+
         # for logging best so far validation accuracy
         self.val_acc_best = MaxMetric()
 
@@ -227,10 +221,10 @@ class DeepMoon(pl.LightningModule):
                  on_epoch=True,
                  prog_bar=False)
 
-        self.log("train/acc", 
-                  acc, 
-                  on_step=False, 
-                  on_epoch=True, 
+        self.log("train/acc",
+                  acc,
+                  on_step=False,
+                  on_epoch=True,
                   prog_bar=True)
 
         return {"loss": loss, "preds": preds, "targets": targets}
@@ -248,20 +242,20 @@ class DeepMoon(pl.LightningModule):
                  on_step=False,
                  on_epoch=True,
                  prog_bar=False)
-        self.log("val/acc", 
-                  acc, 
-                  on_step=False, 
-                  on_epoch=True, 
+        self.log("val/acc",
+                  acc,
+                  on_step=False,
+                  on_epoch=True,
                   prog_bar=True)
-    
+
         return {"loss": loss, "preds": preds, "targets": targets}
 
-    def validation_epoch_end(self, outputs: List[Any]):
+    def on_validation_epoch_end(self):
         acc = self.val_acc.compute()  # get val accuracy from current epoch
 
         gc.collect()
         torch.cuda.empty_cache()
-        
+
         self.val_acc_best.update(acc)
 
         self.log("val/acc_best",
@@ -278,14 +272,14 @@ class DeepMoon(pl.LightningModule):
         # log test metrics
         acc = self.test_acc(preds, targets)
 
-        self.log("test/loss", 
-                 loss, 
-                 on_step=False, 
+        self.log("test/loss",
+                 loss,
+                 on_step=False,
                  on_epoch=True)
 
-        self.log("test/acc", 
-                 acc, 
-                 on_step=False, 
+        self.log("test/acc",
+                 acc,
+                 on_step=False,
                  on_epoch=True)
 
         return {"loss": loss, "preds": preds, "targets": targets}

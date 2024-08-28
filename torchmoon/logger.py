@@ -1,10 +1,9 @@
 import logging
 import warnings
-from typing import List, Sequence
+from typing import Sequence
 
 import rich.syntax
 import rich.tree
-
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning.utilities import rank_zero_only
 

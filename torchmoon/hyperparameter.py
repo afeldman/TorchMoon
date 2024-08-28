@@ -1,9 +1,14 @@
 from typing import List
-from omegaconf import DictConfig
 
-from pytorch_lightning import (LightningModule, LightningDataModule, Trainer,
-                               Callback)
-from pytorch_lightning.loggers import (LightningLoggerBase, wandb)
+from omegaconf import DictConfig
+from pytorch_lightning import Callback, LightningDataModule, LightningModule, Trainer
+from pytorch_lightning.loggers import WandbLogger
+
+try:
+    from pytorch_lightning.loggers import Logger
+except ImportError:
+    from pytorch_lightning.loggers import LightningLoggerBase
+    Logger = LightningLoggerBase
 
 
 def log_hyperparameters(
@@ -12,7 +17,7 @@ def log_hyperparameters(
     datamodule: LightningDataModule,
     trainer: Trainer,
     callbacks: List[Callback],
-    logger: List[LightningLoggerBase],
+    logger: List[Logger],
 ) -> None:
     """Controls which config parts are saved by Lightning loggers.
     Additionaly saves:
@@ -51,13 +56,13 @@ def finish(
     datamodule: LightningDataModule,
     trainer: Trainer,
     callbacks: List[Callback],
-    logger: List[LightningLoggerBase],
+    logger: List[Logger],
 ) -> None:
     """Makes sure everything closed properly."""
 
     # without this sweeps with wandb logger might crash!
     for lg in logger:
-        if isinstance(lg, wandb.WandbLogger):
+        if isinstance(lg, WandbLogger):
             import wandb
 
             wandb.finish()

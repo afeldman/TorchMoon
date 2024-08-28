@@ -1,10 +1,8 @@
 import os
-
 from typing import List, Optional
 
 import hydra
 from omegaconf import DictConfig
-
 from pytorch_lightning import (
     Callback,
     LightningDataModule,
@@ -12,9 +10,14 @@ from pytorch_lightning import (
     Trainer,
     seed_everything,
 )
-from pytorch_lightning.loggers import LightningLoggerBase
 
-from torchmoon.hyperparameter import (log_hyperparameters, finish)
+try:
+    from pytorch_lightning.loggers import Logger
+except ImportError:
+    from pytorch_lightning.loggers import LightningLoggerBase
+    Logger = LightningLoggerBase
+
+from torchmoon.hyperparameter import finish, log_hyperparameters
 from torchmoon.logger import get_logger
 
 log = get_logger(__name__)
@@ -48,7 +51,7 @@ def training(config: DictConfig) -> Optional[float]:
                 callbacks.append(hydra.utils.instantiate(cb_conf))
 
     # Init lightning loggers
-    logger: List[LightningLoggerBase] = []
+    logger: List[Logger] = []
     if "logger" in config:
         for _, lg_conf in config.logger.items():
             if "_target_" in lg_conf:
@@ -114,4 +117,3 @@ def training(config: DictConfig) -> Optional[float]:
 
     # Return metric score for hyperparameter optimization
     return score
-    
